@@ -1,0 +1,134 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <map>
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+struct CoffeeType {
+    string name;
+    double basePrice;
+    int demand;
+};
+
+vector<CoffeeType> coffeeTypes = {
+        {"Espresso", 65.0, 0},
+        {"Latte", 72.0, 0},
+        {"Cappuccino", 75.0, 0},
+        {"Americano", 68.0, 0},
+        {"Mocha", 80.0, 0},
+        {"Flat White", 77.0, 0},
+        {"Macchiato", 70.0, 0},
+        {"Cortado", 73.0, 0},
+        {"Iced Coffee", 85.0, 0}
+};
+
+void updatePrices(vector<CoffeeType>& types) {
+    for (CoffeeType& type : types) {
+        int demandChange = rand() % 21 - 10;
+        type.demand += demandChange;
+
+        double priceChange = (rand() % 31 - 15) / 10.0;
+        type.basePrice += priceChange;
+
+        if (type.basePrice < 5.0) {
+            type.basePrice = 5.0;
+        } else if (type.basePrice > 25.0) {
+            type.basePrice = 25.0;
+        }
+    }
+}
+
+void adjustPrices(vector<CoffeeType>& types, const map<string, int>& orders) {
+    for (CoffeeType& type : types) {
+        int demand = type.demand;
+
+        if (orders.count(type.name) > 0) {
+            int numOrders = orders.at(type.name);
+            type.basePrice += numOrders * 0.50;
+        }
+
+        if (type.demand == 0) {
+            type.basePrice -= 0.25;
+        }
+    }
+}
+
+void printGraph(const map<string, int>& orders) {
+    int maxHeight = 20;
+    cout << "Sipariş Grafiği:" << endl;
+
+    for (int h = maxHeight; h >= 0; --h) {
+        for (const auto& order : orders) {
+            string bar = " ";
+            if (order.second * 2 >= h) {
+                bar = "#";
+            }
+            cout << bar << " ";
+        }
+        cout << endl;
+    }
+
+    for (const auto& order : orders) {
+        cout << "--";
+    }
+    cout << endl;
+
+    for (const auto& order : orders) {
+        cout << order.first << " ";
+    }
+    cout << endl;
+}
+
+void printPriceGraph(const vector<CoffeeType>& types) {
+    int maxWidth = 40;
+    cout << "Fiyat Grafiği:" << endl;
+
+    for (const auto& type : types) {
+        int barWidth = static_cast<int>(type.basePrice / 25.0 * maxWidth);
+        cout << setw(12) << left << type.name << " |";
+        for (int w = 0; w < maxWidth; ++w) {
+            if (w <= barWidth) {
+                cout << "#";
+            } else {
+                cout << " ";
+            }
+        }
+        cout << " " << type.basePrice << " TL" << endl;
+    }
+}
+
+int main() {
+    srand(time(0));
+
+    map<string, int> orders;
+
+    while (true) {
+        updatePrices(coffeeTypes);
+
+        cout << "Sipariş vermek için kahve adı ve miktarını girin (örn: Latte*10), ya da 'cikis' yazarak çıkın: ";
+        string orderInput;
+        cin >> orderInput;
+
+        if (orderInput == "cikis") {
+            break;
+        }
+
+        size_t asteriskPos = orderInput.find('*');
+        if (asteriskPos != string::npos) {
+            string coffeeName = orderInput.substr(0, asteriskPos);
+            int quantity = stoi(orderInput.substr(asteriskPos + 1));
+            orders[coffeeName] += quantity;
+        }
+
+        adjustPrices(coffeeTypes, orders);
+        printGraph(orders);
+        printPriceGraph(coffeeTypes);
+    }
+
+    return 0;
+}
